@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON 格式化工具</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">{ }</span>
+    <h1>JSON 格式化工具</h1>
+    <div class="file-tabs" id="file-tabs"></div>
+  </div>
+  <div class="toolbar">
+    <button id="btn-new-file" class="btn btn-small" title="新建文件">新建</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-format" class="btn btn-primary" title="格式化 (Ctrl+Enter)">格式化</button>
+    <button id="btn-minify" class="btn" title="压缩为一行">压缩</button>
+    <button id="btn-validate" class="btn" title="仅校验合法性">校验</button>
+    <button id="btn-fix" class="btn" title="自动修复JSON">修复</button>
+    <span class="toolbar-sep"></span>
+    <label class="opt">缩进
+      <select id="sel-indent">
+        <option value="2" selected>2 空格</option>
+        <option value="4">4 空格</option>
+        <option value="tab">Tab</option>
+      </select>
+    </label>
+    <label class="opt"><input type="checkbox" id="chk-sort"> 键排序</label>
+    <label class="opt"><input type="checkbox" id="chk-ascii"> 转义非ASCII</label>
+    <label class="opt"><input type="checkbox" id="chk-auto"> 自动</label>
+    <label class="opt"><input type="checkbox" id="chk-json5"> JSON5</label>
+    <span class="toolbar-sep"></span>
+    <label class="opt font-size-ctrl">字号
+      <button id="btn-font-dec" class="btn btn-small btn-font" title="减小字体">-</button>
+      <span id="font-size-display">14</span>
+      <button id="btn-font-inc" class="btn btn-small btn-font" title="增大字体">+</button>
+    </label>
+    <span class="toolbar-sep"></span>
+    <button id="btn-compare-toggle" class="btn" title="开启文件比对模式">比对</button>
+    <button id="btn-sort-keys" class="btn" title="按键名排序">按键排序</button>
+    <button id="btn-sort-values" class="btn" title="按值排序(数组)">按值排序</button>
+    <button id="btn-beautify" class="btn" title="美化JSON (Ctrl+Shift+F)">美化</button>
+    <button id="btn-search" class="btn" title="搜索 (Ctrl+F)">搜索</button>
+    <button id="btn-copy" class="btn" title="复制结果">复制</button>
+    <button id="btn-download" class="btn" title="下载为 .json 文件">下载</button>
+    <button id="btn-sample" class="btn" title="载入示例">示例</button>
+    <button id="btn-history" class="btn" title="历史记录">历史</button>
+    <button id="btn-share" class="btn" title="生成分享链接">分享</button>
+    <button id="btn-print" class="btn" title="打印">打印</button>
+    <div class="theme-dropdown">
+      <button id="btn-theme" class="btn" title="切换主题">☀</button>
+      <div id="theme-picker" class="theme-picker hidden">
+        <div class="theme-option" data-theme="dark" title="深色主题"><span class="theme-dot" style="background:#1e1f26"></span>深色</div>
+        <div class="theme-option" data-theme="light" title="浅色主题"><span class="theme-dot" style="background:#f5f5f5"></span>浅色</div>
+        <div class="theme-option" data-theme="monokai" title="Monokai"><span class="theme-dot" style="background:#272822"></span>Monokai</div>
+        <div class="theme-option" data-theme="dracula" title="Dracula"><span class="theme-dot" style="background:#282a36"></span>Dracula</div>
+        <div class="theme-option" data-theme="solarized" title="Solarized"><span class="theme-dot" style="background:#002b36"></span>Solarized</div>
+        <div class="theme-option" data-theme="nord" title="Nord"><span class="theme-dot" style="background:#2e3440"></span>Nord</div>
+      </div>
+    </div>
+    <button id="btn-shortcuts" class="btn" title="快捷键帮助 (?)">?</button>
+    <button id="btn-clear" class="btn btn-danger" title="清空输入输出">清空</button>
+  </div>
+  <div class="toolbar toolbar-secondary">
+    <span class="toolbar-label">工具:</span>
+    <button id="btn-escape" class="btn btn-small" title="转义字符串">转义</button>
+    <button id="btn-unescape" class="btn btn-small" title="反转义字符串">反转义</button>
+    <button id="btn-unicode" class="btn btn-small" title="Unicode转换">Unicode</button>
+    <button id="btn-base64-img" class="btn btn-small" title="图片转Base64">图片→Base64</button>
+    <button id="btn-img-base64" class="btn btn-small" title="Base64转图片">Base64→图片</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-url-encode" class="btn btn-small" title="URL编码">URL编码</button>
+    <button id="btn-url-decode" class="btn btn-small" title="URL解码">URL解码</button>
+    <button id="btn-json2params" class="btn btn-small" title="JSON转URL参数">JSON→Params</button>
+    <button id="btn-json2csv" class="btn btn-small" title="JSON转CSV表格">JSON→CSV</button>
+    <button id="btn-csv2json" class="btn btn-small" title="CSV转JSON">CSV→JSON</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-chinese2traditional" class="btn btn-small" title="简体转繁体">简→繁</button>
+    <button id="btn-chinese2simplified" class="btn btn-small" title="繁体转简体">繁→简</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-hash" class="btn btn-small" title="哈希生成器">哈希</button>
+    <button id="btn-http" class="btn btn-small" title="HTTP请求测试">HTTP测试</button>
+    <button id="btn-compress" class="btn btn-small" title="JSON压缩/解压">压缩解压</button>
+    <button id="btn-encrypt" class="btn btn-small" title="JSON加密/解密">加密解密</button>
+    <button id="btn-chart" class="btn btn-small" title="JSON数据图表">图表</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-import-yaml" class="btn btn-small" title="导入YAML转JSON">导入YAML</button>
+    <button id="btn-import-xml" class="btn btn-small" title="导入XML转JSON">导入XML</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-export-csv" class="btn btn-small" title="导出为CSV">CSV</button>
+    <button id="btn-export-xlsx" class="btn btn-small" title="导出为Excel(XLSX)">XLSX</button>
+    <button id="btn-export-xml" class="btn btn-small" title="导出为XML">XML</button>
+    <button id="btn-export-yaml" class="btn btn-small" title="导出为YAML">YAML</button>
+    <button id="btn-export-md" class="btn btn-small" title="导出为Markdown表格">MD</button>
+    <button id="btn-template" class="btn btn-small" title="从JSON生成模板">模板</button>
+    <div class="theme-dropdown">
+      <button id="btn-code-gen" class="btn btn-small" title="代码生成器">代码生成 ▾</button>
+      <div id="code-gen-picker" class="theme-picker hidden" style="min-width:180px;">
+        <div class="code-gen-group"><h4>前端</h4>
+          <button class="code-gen-item" data-gen="js">JavaScript</button>
+          <button class="code-gen-item" data-gen="ts">TypeScript</button>
+          <button class="code-gen-item" data-gen="tsif">TypeScript接口</button>
+        </div>
+        <div class="code-gen-group"><h4>后端</h4>
+          <button class="code-gen-item" data-gen="java">Java</button>
+          <button class="code-gen-item" data-gen="go">Go</button>
+          <button class="code-gen-item" data-gen="python">Python</button>
+          <button class="code-gen-item" data-gen="php">PHP</button>
+          <button class="code-gen-item" data-gen="ruby">Ruby</button>
+          <button class="code-gen-item" data-gen="kotlin">Kotlin</button>
+          <button class="code-gen-item" data-gen="csharp">C#</button>
+          <button class="code-gen-item" data-gen="rust">Rust</button>
+          <button class="code-gen-item" data-gen="swift">Swift</button>
+          <button class="code-gen-item" data-gen="dart">Dart</button>
+          <button class="code-gen-item" data-gen="lua">Lua</button>
+        </div>
+        <div class="code-gen-group"><h4>数据</h4>
+          <button class="code-gen-item" data-gen="sql">SQL</button>
+          <button class="code-gen-item" data-gen="graphql">GraphQL</button>
+          <button class="code-gen-item" data-gen="protobuf">Protobuf</button>
+          <button class="code-gen-item" data-gen="zod">Zod</button>
+          <button class="code-gen-item" data-gen="openapi">OpenAPI</button>
+          <button class="code-gen-item" data-gen="mock">Mock数据</button>
+          <button class="code-gen-item" data-gen="jsonl">JSONL</button>
+        </div>
+      </div>
+    </div>
+    <button id="btn-schema" class="btn btn-small" title="JSON Schema验证">Schema</button>
+    <button id="btn-json2html" class="btn btn-small" title="JSON转HTML表格">JSON→HTML</button>
+    <button id="btn-md2json" class="btn btn-small" title="Markdown表格转JSON">MD→JSON</button>
+    <button id="btn-analyzer" class="btn btn-small" title="JSON数据统计分析">分析器</button>
+    <button id="btn-filter" class="btn btn-small" title="JSON数据过滤">过滤</button>
+    <button id="btn-regex" class="btn btn-small" title="正则表达式测试">正则</button>
+    <button id="btn-qr" class="btn btn-small" title="JSON转二维码">QR码</button>
+    <button id="btn-svg" class="btn btn-small" title="JSON转SVG流程图">SVG流程</button>
+    <button id="btn-tree2" class="btn btn-small" title="JSON转树形SVG">SVG树形</button>
+    <span class="toolbar-sep"></span>
+    <button id="btn-pdf" class="btn btn-small" title="PDF工具">PDF工具</button>
+    <button id="btn-export-pdf" class="btn btn-small" title="导出为PDF">导出PDF</button>
+    <button id="btn-timestamp" class="btn btn-small" title="时间戳转换">时间戳</button>
+  </div>
+</header>
+
+<main class="panels" data-mode="single">
+  <section class="panel panel-input">
+    <div class="panel-head">
+      <span class="panel-title" data-role="left">左侧</span>
+      <div class="panel-head-actions">
+        <input type="text" id="jsonpath-input" class="jsonpath-input" placeholder="JSONPath查询 (如 $.data[*].name)" />
+        <button id="btn-jsonpath" class="btn btn-small" title="执行JSONPath查询">查询</button>
+      </div>
+    </div>
+    <textarea id="input" spellcheck="false"
+      placeholder='在此粘贴 JSON,例如:{"name":"张三","age":18}'></textarea>
+  </section>
+
+  <section class="panel panel-divider hidden" id="divider">
+    <div class="panel-head">
+      <span class="panel-title" data-role="right">右侧</span>
+      <span class="hint">支持拖放 .json 文件</span>
+    </div>
+    <textarea id="input-right" spellcheck="false"
+      placeholder='在此粘贴第二段 JSON,用于比对…'></textarea>
+  </section>
+
+  <section class="panel panel-output">
+    <div class="panel-head">
+      <div class="tabs">
+        <button id="tab-formatted" class="tab active">格式化视图</button>
+        <button id="tab-tree" class="tab">树视图</button>
+        <button id="tab-diff" class="tab hidden">差异视图</button>
+        <button id="tab-stats" class="tab">统计</button>
+        <button id="tab-query" class="tab hidden">查询结果</button>
+      </div>
+      <span id="stats" class="hint"></span>
+    </div>
+    <div id="search-bar" class="search-bar hidden">
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="搜索键或值..." />
+        <label class="search-regex-label" title="使用正则表达式"><input type="checkbox" id="search-regex"> .*</label>
+        <button id="search-prev" class="btn btn-small" title="上一个">▲</button>
+        <button id="search-next" class="btn btn-small" title="下一个">▼</button>
+        <span id="search-count" class="search-count"></span>
+        <button id="search-toggle-replace" class="btn btn-small" title="显示替换">▼</button>
+        <button id="search-close" class="btn-icon" title="关闭">×</button>
+      </div>
+      <div id="replace-bar" class="replace-bar hidden">
+        <input type="text" id="replace-input" placeholder="替换为..." />
+        <button id="btn-replace" class="btn btn-small" title="替换当前">替换</button>
+        <button id="btn-replace-all" class="btn btn-small" title="替换全部">全部</button>
+      </div>
+    </div>
+    <div id="view-formatted" class="view active">
+      <div class="path-bar" id="path-bar">
+        <span class="path-label">路径:</span>
+        <span id="current-path" class="current-path">$</span>
+        <button id="btn-copy-current-path" class="btn btn-small" title="复制路径">复制</button>
+      </div>
+      <div class="output-wrap">
+        <div id="line-numbers" class="line-numbers"></div>
+        <pre id="output" class="output"><span class="placeholder">格式化结果将显示在这里</span></pre>
+      </div>
+    </div>
+    <div id="view-tree" class="view">
+      <div class="tree-toolbar">
+        <button id="tree-expand-all" class="btn btn-small" title="展开所有节点">展开全部</button>
+        <button id="tree-collapse-all" class="btn btn-small" title="折叠所有节点">折叠全部</button>
+        <input type="text" id="tree-search" class="tree-search-input" placeholder="搜索节点..." />
+        <span id="tree-search-count" class="search-count"></span>
+        <span class="spacer"></span>
+        <span id="path-display" class="path-display" title="点击复制路径">$</span>
+        <button id="btn-copy-path" class="btn btn-small" title="复制当前路径">复制路径</button>
+      </div>
+      <div id="tree" class="tree"><span class="placeholder">树视图将显示在这里</span></div>
+    </div>
+    <div id="view-diff" class="view">
+      <div id="diff-toolbar" class="diff-toolbar">
+        <span id="diff-summary" class="diff-summary"></span>
+        <span class="spacer"></span>
+        <button id="diff-prev" class="btn btn-small" title="上一处差异">◀</button>
+        <button id="diff-next" class="btn btn-small" title="下一处差异">▶</button>
+      </div>
+      <div id="diff" class="diff"><span class="placeholder">差异结果将显示在这里</span></div>
+    </div>
+    <div id="view-stats" class="view">
+      <div id="stats-content" class="stats-content"><span class="placeholder">统计信息将显示在这里</span></div>
+    </div>
+    <div id="view-query" class="view">
+      <div id="query-result" class="query-result"><span class="placeholder">查询结果将显示在这里</span></div>
+    </div>
+  </section>
+</main>
+
+<div id="history-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>历史记录</h3>
+      <button id="btn-history-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="history-search-bar">
+        <input type="text" id="history-search" class="history-search" placeholder="搜索历史记录...">
+        <span id="history-search-count" class="history-search-count"></span>
+      </div>
+      <div id="history-list" class="history-list">
+        <span class="placeholder">暂无历史记录</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-history-clear" class="btn btn-danger btn-small">清空历史</button>
+      <button id="btn-history-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="share-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>分享 JSON</h3>
+      <button id="btn-share-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="share-hint">复制以下链接分享您的JSON数据：</p>
+      <textarea id="share-url" class="share-url" readonly></textarea>
+      <p class="share-warning">注意：URL包含完整JSON数据，可能很长。大型JSON建议使用文件分享。</p>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-copy-share" class="btn btn-primary btn-small">复制链接</button>
+      <button id="btn-close-share" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="shortcuts-modal" class="modal hidden">
+  <div class="modal-content modal-shortcuts">
+    <div class="modal-header">
+      <h3>快捷键帮助</h3>
+      <button id="btn-shortcuts-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="shortcuts-grid">
+        <div class="shortcut-section">
+          <h4>通用</h4>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>格式化</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>F</kbd><span>搜索</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>M</kbd><span>压缩JSON</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd><span>美化JSON</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>按键名排序</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>L</kbd><span>按值排序</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Z</kbd><span>撤销</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Y</kbd><span>重做</span></div>
+          <div class="shortcut-item"><kbd>Tab</kbd><span>插入缩进</span></div>
+          <div class="shortcut-item"><kbd>Esc</kbd><span>关闭搜索/模态框</span></div>
+          <div class="shortcut-item"><kbd>?</kbd><span>显示快捷键帮助</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h4>搜索</h4>
+          <div class="shortcut-item"><kbd>Enter</kbd><span>下一个</span></div>
+          <div class="shortcut-item"><kbd>Shift</kbd>+<kbd>Enter</kbd><span>上一个</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h4>树视图</h4>
+          <div class="shortcut-item">点击节点<span>复制值</span></div>
+          <div class="shortcut-item">右键节点<span>复制路径</span></div>
+          <div class="shortcut-item">悬停节点<span>显示路径</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h4>操作</h4>
+          <div class="shortcut-item">拖放文件<span>载入JSON</span></div>
+          <div class="shortcut-item">拖放到输出区<span>比对JSON</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-close-shortcuts" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="schema-modal" class="modal hidden">
+  <div class="modal-content modal-schema">
+    <div class="modal-header">
+      <h3>JSON Schema 验证</h3>
+      <button id="btn-schema-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="schema-hint">粘贴 JSON Schema 来验证您的JSON数据：</p>
+      <textarea id="schema-input" class="schema-input" placeholder='{"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "number"}}}'></textarea>
+      <div id="schema-result" class="schema-result hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-schema-validate" class="btn btn-primary btn-small">验证</button>
+      <button id="btn-schema-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="base64-modal" class="modal hidden">
+  <div class="modal-content modal-base64">
+    <div class="modal-header">
+      <h3>图片转 Base64</h3>
+      <button id="btn-base64-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="base64-drop-zone" id="base64-drop-zone">
+        <div class="base64-drop-icon">🖼</div>
+        <p>拖放图片到此处，或点击选择文件</p>
+        <p class="base64-hint">支持 JPG、PNG、GIF、WebP、SVG</p>
+        <input type="file" id="base64-file-input" accept="image/*" hidden>
+      </div>
+      <div id="base64-preview-area" class="base64-preview-area hidden">
+        <div class="base64-preview-row">
+          <img id="base64-preview" class="base64-preview" alt="预览">
+          <div class="base64-info">
+            <div id="base64-filename" class="base64-filename"></div>
+            <div id="base64-filesize" class="base64-filesize"></div>
+          </div>
+        </div>
+        <label class="opt">
+          <input type="checkbox" id="base64-datauri"> 返回 data:URI 格式
+        </label>
+        <textarea id="base64-output" class="base64-output" readonly></textarea>
+        <div class="base64-actions">
+          <button id="btn-base64-copy" class="btn btn-primary btn-small">复制</button>
+          <button id="btn-base64-json" class="btn btn-small">输出为JSON</button>
+          <button id="btn-base64-reset" class="btn btn-small">重新选择</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-base64-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="img-decode-modal" class="modal hidden">
+  <div class="modal-content modal-img-decode">
+    <div class="modal-header">
+      <h3>Base64 转图片</h3>
+      <button id="btn-img-decode-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="img-decode-hint">粘贴 Base64 字符串（支持 data:URI 或纯 Base64）：</p>
+      <textarea id="img-decode-input" class="img-decode-input" placeholder="data:image/png;base64,iVBORw0KGgoAAAANS... 或纯 Base64 字符串"></textarea>
+      <div class="img-decode-actions">
+        <button id="btn-img-decode-preview" class="btn btn-primary btn-small">预览</button>
+        <button id="btn-img-decode-from-input" class="btn btn-small">从输入框获取</button>
+      </div>
+      <div id="img-decode-result" class="img-decode-result hidden">
+        <div class="img-decode-preview-row">
+          <img id="img-decode-preview" class="img-decode-preview" alt="预览">
+          <div class="img-decode-info">
+            <div id="img-decode-type" class="img-decode-type"></div>
+            <div id="img-decode-size" class="img-decode-size"></div>
+          </div>
+        </div>
+        <div class="img-decode-btns">
+          <button id="btn-img-decode-download" class="btn btn-primary btn-small">下载图片</button>
+          <button id="btn-img-decode-copy-img" class="btn btn-small">复制图片</button>
+          <input type="text" id="img-decode-filename" class="img-decode-filename" placeholder="文件名 (不填则自动)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-img-decode-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="timestamp-modal" class="modal hidden">
+  <div class="modal-content modal-timestamp">
+    <div class="modal-header">
+      <h3>时间戳转换</h3>
+      <button id="btn-timestamp-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="ts-section">
+        <h4>当前时间</h4>
+        <div class="ts-current">
+          <span id="ts-current-time" class="ts-current-value"></span>
+          <span id="ts-current-unix" class="ts-current-unix"></span>
+          <button id="btn-ts-copy-now" class="btn btn-small">复制时间戳</button>
+        </div>
+      </div>
+      <div class="ts-section">
+        <h4>时间戳 → 日期</h4>
+        <div class="ts-convert-row">
+          <input type="text" id="ts-input" class="ts-input" placeholder="输入时间戳 (如 1700000000 或 1700000000000)">
+          <select id="ts-unit" class="ts-unit">
+            <option value="s">秒 (s)</option>
+            <option value="ms" selected>毫秒 (ms)</option>
+          </select>
+          <button id="btn-ts-to-date" class="btn btn-primary btn-small">转换</button>
+        </div>
+        <div id="ts-result-date" class="ts-result hidden"></div>
+      </div>
+      <div class="ts-section">
+        <h4>日期 → 时间戳</h4>
+        <div class="ts-convert-row">
+          <input type="datetime-local" id="ts-date-input" class="ts-input">
+          <button id="btn-ts-to-stamp" class="btn btn-primary btn-small">转换</button>
+          <button id="btn-ts-now" class="btn btn-small">填入当前时间</button>
+        </div>
+        <div id="ts-result-stamp" class="ts-result hidden"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-timestamp-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="pdf-modal" class="modal hidden">
+  <div class="modal-content modal-pdf">
+    <div class="modal-header">
+      <h3>PDF 工具</h3>
+      <button id="btn-pdf-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="pdf-tabs">
+        <button class="pdf-tab active" data-tab="extract">文本提取</button>
+        <button class="pdf-tab" data-tab="tojson">转JSON</button>
+        <button class="pdf-tab" data-tab="tomd">转Markdown</button>
+        <button class="pdf-tab" data-tab="info">PDF信息</button>
+      </div>
+
+      <div id="pdf-tab-extract" class="pdf-panel active">
+        <div class="pdf-drop-zone" id="pdf-drop-zone">
+          <div class="pdf-drop-icon">📄</div>
+          <p>拖放PDF文件到此处，或点击选择文件</p>
+          <p class="pdf-hint">支持 PDF 文件，最大 20MB</p>
+          <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" hidden>
+        </div>
+        <div id="pdf-info" class="pdf-info hidden">
+          <div id="pdf-filename" class="pdf-filename"></div>
+          <div id="pdf-pages" class="pdf-pages"></div>
+        </div>
+        <textarea id="pdf-output" class="pdf-output" readonly placeholder="PDF文本内容将显示在这里..."></textarea>
+        <div class="pdf-actions">
+          <button id="btn-pdf-copy" class="btn btn-primary btn-small">复制文本</button>
+          <button id="btn-pdf-to-input" class="btn btn-small">发送到输入框</button>
+          <button id="btn-pdf-download" class="btn btn-small">下载为TXT</button>
+          <button id="btn-pdf-reset" class="btn btn-small">重新选择</button>
+        </div>
+      </div>
+
+      <div id="pdf-tab-tojson" class="pdf-panel hidden">
+        <p class="pdf-hint">提取PDF文本并尝试转为JSON格式</p>
+        <div class="pdf-convert-options">
+          <label class="opt"><input type="checkbox" id="pdf-json-table" checked> 识别表格</label>
+          <label class="opt"><input type="checkbox" id="pdf-json-array" checked> 输出为数组</label>
+        </div>
+        <button id="btn-pdf-tojson" class="btn btn-primary btn-small">转换为JSON</button>
+        <textarea id="pdf-json-output" class="pdf-output" readonly placeholder="JSON结果将显示在这里..."></textarea>
+        <div class="pdf-actions">
+          <button id="btn-pdf-json-copy" class="btn btn-small">复制</button>
+          <button id="btn-pdf-json-to-input" class="btn btn-small">发送到输入框</button>
+        </div>
+      </div>
+
+      <div id="pdf-tab-tomd" class="pdf-panel hidden">
+        <p class="pdf-hint">提取PDF文本并转为Markdown格式</p>
+        <div class="pdf-convert-options">
+          <label class="opt"><input type="checkbox" id="pdf-md-headers" checked> 识别标题</label>
+          <label class="opt"><input type="checkbox" id="pdf-md-table" checked> 识别表格</label>
+        </div>
+        <button id="btn-pdf-tomd" class="btn btn-primary btn-small">转换为Markdown</button>
+        <textarea id="pdf-md-output" class="pdf-output" readonly placeholder="Markdown结果将显示在这里..."></textarea>
+        <div class="pdf-actions">
+          <button id="btn-pdf-md-copy" class="btn btn-small">复制</button>
+          <button id="btn-pdf-md-download" class="btn btn-small">下载为.md文件</button>
+        </div>
+      </div>
+
+      <div id="pdf-tab-info" class="pdf-panel hidden">
+        <div id="pdf-detail-info" class="pdf-detail-info">
+          <p class="pdf-hint">请先上传PDF文件以查看详细信息</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-pdf-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="http-modal" class="modal hidden">
+  <div class="modal-content modal-http">
+    <div class="modal-header">
+      <h3>HTTP 请求测试</h3>
+      <button id="btn-http-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="http-row">
+        <select id="http-method" class="http-method">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+          <option value="PATCH">PATCH</option>
+          <option value="HEAD">HEAD</option>
+        </select>
+        <input type="text" id="http-url" class="http-url" placeholder="输入请求URL (如 https://api.example.com/data)">
+        <button id="btn-http-send" class="btn btn-primary btn-small">发送</button>
+      </div>
+      <div class="http-tabs">
+        <button class="http-tab active" data-tab="http-body">Body</button>
+        <button class="http-tab" data-tab="http-headers-tab">Headers</button>
+      </div>
+      <div id="http-body" class="http-panel active">
+        <textarea id="http-body-input" class="http-textarea" placeholder='请求体 (JSON格式)\n{\n  "key": "value"\n}'></textarea>
+        <div class="http-content-type">
+          <label class="opt">Content-Type:</label>
+          <select id="http-content-type">
+            <option value="application/json">application/json</option>
+            <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+            <option value="text/plain">text/plain</option>
+          </select>
+        </div>
+      </div>
+      <div id="http-headers-tab" class="http-panel hidden">
+        <textarea id="http-headers-input" class="http-textarea" placeholder='自定义请求头 (JSON格式)\n{\n  "Authorization": "Bearer token123"\n}'></textarea>
+      </div>
+      <div id="http-loading" class="http-loading hidden">请求中...</div>
+      <div id="http-response" class="http-response hidden">
+        <div class="http-response-header">
+          <span id="http-status" class="http-status"></span>
+          <span id="http-time" class="http-time"></span>
+          <button id="btn-http-copy-resp" class="btn btn-small">复制</button>
+        </div>
+        <pre id="http-response-body" class="http-response-body"></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-http-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="hash-modal" class="modal hidden">
+  <div class="modal-content modal-hash">
+    <div class="modal-header">
+      <h3>哈希生成器</h3>
+      <button id="btn-hash-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="hash-hint">输入文本生成各种哈希值：</p>
+      <textarea id="hash-input" class="hash-input" placeholder="输入要哈希的文本..."></textarea>
+      <div class="hash-actions">
+        <button id="btn-hash-gen" class="btn btn-primary btn-small">生成哈希</button>
+        <button id="btn-hash-from-input" class="btn btn-small">从输入框获取</button>
+      </div>
+      <div id="hash-results" class="hash-results">
+        <div class="hash-row">
+          <span class="hash-label">MD5:</span>
+          <input type="text" class="hash-value" id="hash-md5" readonly>
+          <button class="btn btn-small hash-copy-btn" data-target="hash-md5">复制</button>
+        </div>
+        <div class="hash-row">
+          <span class="hash-label">SHA-1:</span>
+          <input type="text" class="hash-value" id="hash-sha1" readonly>
+          <button class="btn btn-small hash-copy-btn" data-target="hash-sha1">复制</button>
+        </div>
+        <div class="hash-row">
+          <span class="hash-label">SHA-256:</span>
+          <input type="text" class="hash-value" id="hash-sha256" readonly>
+          <button class="btn btn-small hash-copy-btn" data-target="hash-sha256">复制</button>
+        </div>
+        <div class="hash-row">
+          <span class="hash-label">SHA-512:</span>
+          <input type="text" class="hash-value" id="hash-sha512" readonly>
+          <button class="btn btn-small hash-copy-btn" data-target="hash-sha512">复制</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-hash-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="html-modal" class="modal hidden">
+  <div class="modal-content modal-html">
+    <div class="modal-header">
+      <h3>JSON 转 HTML 表格</h3>
+      <button id="btn-html-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim);margin-bottom:8px;">将JSON数组转为带样式的HTML表格</p>
+      <div class="html-options">
+        <label class="opt"><input type="checkbox" id="html-style" checked> 内联样式</label>
+        <label class="opt"><input type="checkbox" id="html-border" checked> 边框</label>
+        <label class="opt"><input type="checkbox" id="html-striped" checked> 斑马纹</label>
+      </div>
+      <textarea id="html-output" class="java-output" readonly placeholder="HTML代码将显示在这里..."></textarea>
+      <div class="html-preview" id="html-preview"></div>
+      <div class="java-actions">
+        <button id="btn-html-copy" class="btn btn-small">复制HTML</button>
+        <button id="btn-html-download" class="btn btn-small">下载.html文件</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-html-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="filter-modal" class="modal hidden">
+  <div class="modal-content modal-compress">
+    <div class="modal-header">
+      <h3>JSON 数据过滤</h3>
+      <button id="btn-filter-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="compress-row">
+        <label style="color:var(--text-dim);font-size:13px;">过滤方式:</label>
+        <select id="filter-mode" class="http-method" style="min-width:140px">
+          <option value="key">按键名过滤</option>
+          <option value="value">按值类型过滤</option>
+          <option value="path">按路径过滤</option>
+          <option value="regex">正则匹配值</option>
+          <option value="minmax">数值范围</option>
+        </select>
+      </div>
+      <div class="compress-row">
+        <input type="text" id="filter-input1" class="java-input-sm" style="flex:1" placeholder="过滤条件...">
+        <input type="text" id="filter-input2" class="java-input-sm" style="flex:1;display:none" placeholder="最大值">
+      </div>
+      <div class="compress-row">
+        <label class="opt"><input type="checkbox" id="filter-invert"> 反向过滤（排除匹配项）</label>
+      </div>
+      <button id="btn-filter-run" class="btn btn-primary btn-small" style="margin-bottom:12px">应用过滤</button>
+      <button id="btn-filter-to-input" class="btn btn-small" style="margin-bottom:12px;margin-left:8px">结果发送到输入框</button>
+      <textarea id="filter-output" class="compress-input" style="height:200px" readonly placeholder="过滤结果..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-filter-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="analyzer-modal" class="modal hidden">
+  <div class="modal-content modal-analyzer">
+    <div class="modal-header">
+      <h3>JSON 数据统计分析</h3>
+      <button id="btn-analyzer-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="analyzer-results" class="analyzer-results">
+        <p style="color:var(--text-dim)">点击"分析"按钮开始统计</p>
+      </div>
+      <button id="btn-analyzer-run" class="btn btn-primary btn-small" style="margin-top:12px;">分析输入框JSON</button>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-analyzer-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="regex-modal" class="modal hidden">
+  <div class="modal-content modal-regex">
+    <div class="modal-header">
+      <h3>正则表达式测试</h3>
+      <button id="btn-regex-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="regex-input-row">
+        <input type="text" id="regex-pattern" class="http-url" placeholder="正则表达式 (如 \d+|[a-zA-Z]+)">
+        <input type="text" id="regex-flags" class="java-input-sm" style="min-width:60px" value="g" placeholder="flags">
+      </div>
+      <textarea id="regex-test-text" class="http-textarea" placeholder="输入要测试的文本..."></textarea>
+      <button id="btn-regex-test" class="btn btn-primary btn-small">测试匹配</button>
+      <div id="regex-results" class="regex-results"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-regex-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="qr-modal" class="modal hidden">
+  <div class="modal-content modal-qr">
+    <div class="modal-header">
+      <h3>JSON 转二维码</h3>
+      <button id="btn-qr-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim);margin-bottom:8px;">将JSON内容生成为二维码（建议数据量不超过2KB）</p>
+      <button id="btn-qr-gen" class="btn btn-primary btn-small">从输入框生成二维码</button>
+      <div class="qr-preview" id="qr-preview"></div>
+      <div class="java-actions">
+        <button id="btn-qr-download" class="btn btn-small">下载二维码</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-qr-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="encrypt-modal" class="modal hidden">
+  <div class="modal-content modal-compress">
+    <div class="modal-header">
+      <h3>JSON 加密/解密</h3>
+      <button id="btn-encrypt-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="compress-row">
+        <label style="color:var(--text-dim);font-size:13px;">密钥:</label>
+        <input type="text" id="encrypt-key" class="java-input-sm" style="flex:1" placeholder="输入密钥 (16/24/32字节)">
+        <select id="encrypt-algo" class="http-method" style="min-width:80px">
+          <option value="aes-ctr">AES-CTR</option>
+          <option value="aes-cbc">AES-CBC</option>
+        </select>
+      </div>
+      <div class="compress-row">
+        <button id="btn-encrypt-enc" class="btn btn-primary btn-small">加密</button>
+        <button id="btn-encrypt-dec" class="btn btn-primary btn-small">解密</button>
+      </div>
+      <textarea id="encrypt-input" class="compress-input" style="height:120px" placeholder="输入要加密/解密的内容..."></textarea>
+      <div style="text-align:center;margin:8px 0;color:var(--text-dim)">↓</div>
+      <textarea id="encrypt-output" class="compress-input" style="height:120px" readonly placeholder="结果..."></textarea>
+      <div class="java-actions" style="margin-top:8px">
+        <button id="btn-encrypt-copy" class="btn btn-small">复制结果</button>
+        <button id="btn-encrypt-swap" class="btn btn-small">结果→输入</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-encrypt-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="svg-modal" class="modal hidden">
+  <div class="modal-content modal-svg">
+    <div class="modal-header">
+      <h3 id="svg-modal-title">SVG 流程图</h3>
+      <button id="btn-svg-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="svg-preview" class="chart-preview" style="min-height:400px;overflow:auto;background:#fff;"></div>
+      <div class="java-actions" style="margin-top:12px">
+        <button id="btn-svg-copy" class="btn btn-small">复制SVG代码</button>
+        <button id="btn-svg-download" class="btn btn-small">下载.svg文件</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-svg-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="chart-modal" class="modal hidden">
+  <div class="modal-content modal-chart">
+    <div class="modal-header">
+      <h3>JSON 数据图表</h3>
+      <button id="btn-chart-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim);margin-bottom:8px;">从JSON对象数组生成图表（仅支持数值字段）</p>
+      <div class="chart-options">
+        <label style="color:var(--text-dim);font-size:13px;">X轴字段:</label>
+        <select id="chart-x-field" class="http-method"></select>
+        <label style="color:var(--text-dim);font-size:13px;">Y轴字段:</label>
+        <select id="chart-y-field" class="http-method"></select>
+        <label style="color:var(--text-dim);font-size:13px;">图表类型:</label>
+        <select id="chart-type" class="http-method">
+          <option value="bar">柱状图</option>
+          <option value="line">折线图</option>
+          <option value="pie">饼图</option>
+        </select>
+      </div>
+      <button id="btn-chart-gen" class="btn btn-primary btn-small" style="margin:12px 0">生成图表</button>
+      <div class="chart-preview" id="chart-preview">
+        <p style="color:var(--text-dim);text-align:center;padding:40px">请选择字段并点击"生成图表"</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-chart-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="compress-modal" class="modal hidden">
+  <div class="modal-content modal-compress">
+    <div class="modal-header">
+      <h3>JSON 压缩/解压</h3>
+      <button id="btn-compress-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="compress-row">
+        <button id="btn-compress-gzip" class="btn btn-primary btn-small">Gzip压缩</button>
+        <button id="btn-decompress-gzip" class="btn btn-primary btn-small">Gzip解压</button>
+        <button id="btn-compress-base64" class="btn btn-small">压缩→Base64</button>
+      </div>
+      <textarea id="compress-input" class="compress-input" style="height:120px" placeholder="输入内容..."></textarea>
+      <div style="text-align:center;margin:8px 0;color:var(--text-dim)">↓</div>
+      <textarea id="compress-output" class="compress-input" style="height:120px" readonly placeholder="结果..."></textarea>
+      <div class="java-actions" style="margin-top:8px">
+        <button id="btn-compress-copy" class="btn btn-small">复制结果</button>
+        <button id="btn-compress-swap" class="btn btn-small">结果→输入</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-compress-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="md2json-modal" class="modal hidden">
+  <div class="modal-content modal-md2json">
+    <div class="modal-header">
+      <h3>Markdown 表格转 JSON</h3>
+      <button id="btn-md2json-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="md2json-input" class="http-textarea" style="height:150px" placeholder="粘贴Markdown表格..."></textarea>
+      <button id="btn-md2json-convert" class="btn btn-primary btn-small" style="margin-top:8px">转换为JSON</button>
+      <textarea id="md2json-output" class="http-textarea" style="height:150px;margin-top:8px" readonly placeholder="JSON结果..."></textarea>
+      <div class="java-actions" style="margin-top:8px">
+        <button id="btn-md2json-copy" class="btn btn-small">复制到输入框</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-md2json-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="table-modal" class="modal hidden">
+  <div class="modal-content modal-table">
+    <div class="modal-header">
+      <h3>JSON 转 CSV 表格</h3>
+      <button id="btn-table-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim);margin-bottom:8px;">仅支持对象数组格式的JSON，如 <code>[{"name":"张三","age":25},...]</code></p>
+      <div class="table-scroll">
+        <table id="json-table" class="json-table"></table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="btn-table-copy-csv" class="btn btn-small">复制为CSV</button>
+        <button id="btn-table-download-csv" class="btn btn-small">下载CSV文件</button>
+        <button id="btn-table-download-xlsx" class="btn btn-small">下载为Excel提示</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-table-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="java-modal" class="modal hidden">
+  <div class="modal-content modal-java">
+    <div class="modal-header">
+      <h3>Java 代码生成器</h3>
+      <button id="btn-java-close" class="btn-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="java-hint">从JSON生成Java Bean / POJO类</p>
+      <div class="java-options">
+        <div class="java-opt-row">
+          <label>类名:</label>
+          <input type="text" id="java-classname" class="java-input-sm" value="Root" placeholder="ClassName">
+        </div>
+        <div class="java-opt-row">
+          <label>包名:</label>
+          <input type="text" id="java-package" class="java-input-sm" placeholder="com.example">
+        </div>
+        <div class="java-opt-row">
+          <label>生成选项:</label>
+          <label class="opt"><input type="checkbox" id="java-lombok" checked> Lombok</label>
+          <label class="opt"><input type="checkbox" id="java-getset" checked> Getter/Setter</label>
+          <label class="opt"><input type="checkbox" id="java-tostring" checked> toString</label>
+          <label class="opt"><input type="checkbox" id="java-serializable"> Serializable</label>
+        </div>
+      </div>
+      <button id="btn-java-gen" class="btn btn-primary btn-small">从输入框生成Java类</button>
+      <textarea id="java-output" class="java-output" readonly placeholder="Java代码将显示在这里..."></textarea>
+      <div class="java-actions">
+        <button id="btn-java-copy" class="btn btn-small">复制</button>
+        <button id="btn-java-download" class="btn btn-small">下载.java文件</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-java-close-footer" class="btn btn-small">关闭</button>
+    </div>
+  </div>
+</div>
+
+<footer id="error-bar" class="error-bar hidden">
+  <span id="error-icon">✕</span>
+  <span id="error-msg"></span>
+  <button id="btn-error-close" class="btn-icon" title="关闭">×</button>
+</footer>
+<footer id="status-bar" class="status-bar">
+  <span id="status-msg">就绪</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
